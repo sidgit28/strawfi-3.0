@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: fintech-multiverse-backend
+    env: node
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+    name: strawfi-backend
+    env: node
+    buildCommand: npm install && pip install -r requirements.txt
+    startCommand: node server.js
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: FRONTEND_URL
+        value: https://fintech-multiverse.vercel.app 
