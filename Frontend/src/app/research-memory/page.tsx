@@ -257,6 +257,8 @@ export default function ResearchMemory() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState('All');
+const [sortBy, setSortBy] = useState('latest');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [teamsExist, setTeamsExist] = useState(false);
@@ -416,13 +418,39 @@ export default function ResearchMemory() {
     setIsCreateModalOpen(false);
   };
 
-  const filteredResearch = researchItems.filter(item => {
+  const filteredResearch = researchItems
+  .filter(item => {
     const cleanContent = stripHtmlRegex(item.content);
-    return item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           cleanContent.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-  });
+    const search = searchTerm.toLowerCase().trim();
 
+    const matchesSearch =
+      !search ||
+      item.title.toLowerCase().includes(search) ||
+      cleanContent.toLowerCase().includes(search) ||
+      item.tags.some(tag => tag.toLowerCase().includes(search));
+
+    const matchesType =
+      selectedType === 'All' || item.type === selectedType;
+
+    return matchesSearch && matchesType;
+  })
+  .sort((a, b) => {
+    if (sortBy === 'latest') {
+      return new Date(b.updated_at || b.created_at).getTime() -
+             new Date(a.updated_at || a.created_at).getTime();
+    }
+
+    if (sortBy === 'oldest') {
+      return new Date(a.updated_at || a.created_at).getTime() -
+             new Date(b.updated_at || b.created_at).getTime();
+    }
+
+    if (sortBy === 'a-z') {
+      return a.title.localeCompare(b.title);
+    }
+
+    return 0;
+  });
   // WebSocket connection
   const connectWebSocket = useCallback(() => {
     const wsUrl = config.websocket.url;
@@ -633,39 +661,90 @@ export default function ResearchMemory() {
           </p>
         </div>
 
-        {/* Search and Create Section */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Search Bar */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search research..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-white/30"
-                />
-              </div>
-            </div>
+        {/* Search, Filters and Create Section */}
+<div className="max-w-7xl mx-auto mb-8">
+  <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
 
-            <Button
-              onClick={() => {
-                const teamJwt = localStorage.getItem('team_jwt');
-                if (!teamJwt) {
-                  alert('Please log in to your team first');
-                  return;
-                }
-                setIsCreateModalOpen(true);
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Research
-            </Button>
-          </div>
-        </div>
+    {/* Search */}
+    <div className="flex-1">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+
+        <input
+          type="text"
+          placeholder="Search research, insights or tags..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+        />
+      </div>
+    </div>
+
+    {/* Research Type Filter */}
+    <select
+      value={selectedType}
+      onChange={(e) => setSelectedType(e.target.value)}
+      className="bg-gray-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+    >
+      <option value="All">All Research</option>
+      <option value="Company Research">Company Research</option>
+      <option value="Sector Analysis">Sector Analysis</option>
+      <option value="Macro Analysis">Macro Analysis</option>
+      <option value="Technical Analysis">Technical Analysis</option>
+      <option value="Market Commentary">Market Commentary</option>
+    </select>
+
+    {/* Sort */}
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value)}
+      className="bg-gray-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+    >
+      <option value="latest">Latest Updated</option>
+      <option value="oldest">Oldest Updated</option>
+      <option value="a-z">A–Z</option>
+    </select>
+
+    {/* Create Research */}
+    <Button
+      onClick={() => {
+        const teamJwt = localStorage.getItem('team_jwt');
+
+        if (!teamJwt) {
+          alert('Please log in to your team first');
+          return;
+        }
+
+        setIsCreateModalOpen(true);
+      }}
+      className="bg-blue-600 hover:bg-blue-700 text-white"
+    >
+      <Plus className="mr-2 h-4 w-4" />
+      Create Research
+    </Button>
+  </div>
+
+  {/* Results summary */}
+  <div className="flex items-center justify-between mt-4 text-sm text-gray-400">
+    <span>
+      {filteredResearch.length} research item
+      {filteredResearch.length !== 1 ? 's' : ''} found
+    </span>
+
+    {(searchTerm || selectedType !== 'All') && (
+      <button
+        type="button"
+        onClick={() => {
+          setSearchTerm('');
+          setSelectedType('All');
+        }}
+        className="text-blue-400 hover:text-blue-300"
+      >
+        Clear filters
+      </button>
+    )}
+  </div>
+</div>
 
         {error && (
           <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6 max-w-4xl mx-auto">

@@ -17,44 +17,102 @@ class ApiService {
     return config.api.baseUrl;
   }
 
-  async authenticatedFetch(
-    endpoint: string, 
-    options: RequestInit = {}, 
-    jwt?: string | null
-  ): Promise<Response> {
-    const url = `${this.getApiUrl()}${endpoint}`;
-    
-    console.log(`🔐 JWT for request:`, jwt ? 'Present' : 'Missing');
-    if (jwt) {
-      console.log(`🔑 JWT preview:`, jwt.substring(0, 50) + '...');
-    }
-    
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...this.getAuthHeaders(jwt),
-        ...options.headers,
-      },
-    };
+async authenticatedFetch(
+  endpoint: string,
+  options: RequestInit = {},
+  jwt?: string | null
+): Promise<Response> {
+  const authToken =
+    jwt ||
+    localStorage.getItem("team_jwt") ||
+    localStorage.getItem("teamJwt");
 
-    console.log(`Making authenticated request to: ${url}`);
-    console.log(`📤 Request headers:`, JSON.stringify(config.headers, null, 2));
-    
-    try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        console.error(`API Error [${response.status}]: ${errorText}`);
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-      }
-      
-      return response;
-    } catch (error) {
-      console.error(`API request failed for ${url}:`, error);
-      throw error;
-    }
+  const url = `${this.getApiUrl()}${endpoint}`;
+
+  console.log(
+    "🔐 JWT for request:",
+    authToken ? "Present" : "Missing"
+  );
+
+  if (authToken) {
+    console.log(
+      "🔑 JWT preview:",
+      `${authToken.substring(0, 50)}...`
+    );
   }
+
+  const requestConfig: RequestInit = {
+    ...options,
+    headers: {
+      ...this.getAuthHeaders(authToken),
+      ...options.headers,
+    },
+  };
+
+  console.log(
+    "Making authenticated request to:",
+    url
+  );
+
+  try {
+    const response = await fetch(
+      url,
+      requestConfig
+    );
+
+    console.log(
+      `📥 API response [${response.status}] ${response.statusText}`
+    );
+
+    /*
+     * IMPORTANT:
+     * Do NOT throw here for 401/403.
+     * The calling page needs the Response object so it
+     * can handle an expired/invalid team session properly.
+     */
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      console.warn(
+        `🔒 Authentication rejected: ${response.status}`
+      );
+
+      return response;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+  console.warn(
+    `🔒 Team authentication rejected: ${response.status} ${response.statusText}`
+  );
+
+  return response;
+}
+
+if (!response.ok) {
+  const errorText = await response.text().catch(
+    () => "Unknown error"
+  );
+
+  console.error(
+    `API Error [${response.status}]: ${errorText}`
+  );
+
+  throw new Error(
+    `API request failed: ${response.status} ${response.statusText}`
+  );
+}
+
+    return response;
+  } catch (error) {
+    console.error(
+      `API request failed for ${url}:`,
+      error
+    );
+
+    throw error;
+  }
+}
 
   // Research API methods
   async createResearch(data: any, jwt: string): Promise<any> {

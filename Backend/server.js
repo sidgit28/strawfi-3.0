@@ -450,7 +450,7 @@ app.post('/api/team-login', async (req, res) => {
     const token = jwt.sign(
       { team_id: team.id, team_name: team.team_name },
       process.env.JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '7d' }
     );
     res.json({ token, team_id: team.id, team_name: team.team_name });
   } catch (err) {
@@ -803,5 +803,1013 @@ const startServer = () => {
     }
   }
 };
+// ---------- Economic Data / FRED ----------
+
+const FRED_SERIES = {
+  PAYEMS: "Nonfarm Payrolls",
+  UNRATE: "Unemployment Rate",
+  CPIAUCSL: "Consumer Price Index",
+  FEDFUNDS: "Federal Funds Rate",
+  GDP: "Gross Domestic Product",
+};
+
+app.get("/api/economic-data", async (req, res) => {
+  try {
+    const seriesId = String(
+      req.query.series || "PAYEMS"
+    ).toUpperCase();
+
+    if (!FRED_SERIES[seriesId]) {
+      return res.status(400).json({
+        success: false,
+        error: "Unsupported economic series.",
+      });
+    }
+
+    const apiKey = process.env.FRED_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error:
+          "FRED_API_KEY is not configured on the backend.",
+      });
+    }
+
+    const fredUrl =
+      "https://api.stlouisfed.org/fred/series/observations" +
+      `?series_id=${encodeURIComponent(seriesId)}` +
+      `&api_key=${encodeURIComponent(apiKey)}` +
+      "&file_type=json" +
+      "&sort_order=asc" +
+      "&limit=100";
+
+    const fredResponse = await fetch(fredUrl);
+
+    if (!fredResponse.ok) {
+      const text = await fredResponse
+        .text()
+        .catch(() => "");
+
+      console.error(
+        "FRED request failed:",
+        fredResponse.status,
+        text
+      );
+
+      return res.status(502).json({
+        success: false,
+        error:
+          "FRED data service returned an error.",
+      });
+    }
+
+    const fredData = await fredResponse.json();
+
+    const rawObservations =
+      Array.isArray(fredData.observations)
+        ? fredData.observations
+        : [];
+
+    const observations = rawObservations
+      .map((item) => ({
+        date: item.date,
+        value:
+          item.value === "." ||
+          item.value === "" ||
+          item.value == null
+            ? null
+            : Number(item.value),
+      }))
+      .filter(
+        (item) =>
+          item.date &&
+          (item.value === null ||
+            Number.isFinite(item.value))
+      );
+
+    const seriesResponse = await fetch(
+      "https://api.stlouisfed.org/fred/series" +
+        `?series_id=${encodeURIComponent(seriesId)}` +
+        `&api_key=${encodeURIComponent(apiKey)}` +
+        "&file_type=json"
+    );
+
+    const seriesData = seriesResponse.ok
+      ? await seriesResponse.json()
+      : null;
+
+    const seriesMeta =
+      seriesData?.seriess?.[0] || {};
+
+    return res.json({
+      success: true,
+      series: {
+        id: seriesId,
+        title:
+          seriesMeta.title ||
+          FRED_SERIES[seriesId],
+        units:
+          seriesMeta.units ||
+          "",
+        frequency:
+          seriesMeta.frequency ||
+          "",
+        last_updated:
+          seriesMeta.last_updated ||
+          null,
+      },
+      observations,
+    });
+  } catch (error) {
+    console.error(
+      "Economic data endpoint error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      error:
+        "Unable to retrieve economic data.",
+    });
+  }
+});
+
+// ---------- Insider Transactions / SEC ----------
+
+let secTickerMapCache = null;
+let secTickerMapFetchedAt = 0;
+
+async function getSecTickerMap() {
+  const now = Date.now();
+
+  if (
+    secTickerMapCache &&
+    now - secTickerMapFetchedAt < 6 * 60 * 60 * 1000
+  ) {
+    return secTickerMapCache;
+  }
+
+  const response = await fetch(
+    "https://www.sec.gov/files/company_tickers.json",
+    {
+      headers: {
+        "User-Agent":
+          "StrawFi research platform contact@example.com",
+        Accept: "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `SEC ticker lookup failed: ${response.status}`
+    );
+  }
+
+  const raw = await response.json();
+  const map = {};
+
+  for (const item of Object.values(raw)) {
+    const ticker = String(item.ticker || "").toUpperCase();
+
+    if (!ticker) continue;
+
+    map[ticker] = {
+      cik: String(item.cik_str).padStart(10, "0"),
+      name: item.title,
+    };
+  }
+
+  secTickerMapCache = map;
+  secTickerMapFetchedAt = now;
+
+  return map;
+}
+
+function decodeXml(value = "") {
+  return value
+    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, "$1")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+}
+
+function xmlTag(xml, tag) {
+  const match = xml.match(
+    new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i")
+  );
+
+  return match ? decodeXml(match[1].replace(/<[^>]+>/g, "")) : "";
+}
+
+function xmlTagNumber(xml, tag) {
+  const value = xmlTag(xml, tag);
+  if (!value) return null;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+app.get("/api/insider-transactions", async (req, res) => {
+  try {
+    const ticker = String(
+      req.query.ticker || ""
+    )
+      .trim()
+      .toUpperCase();
+
+    if (!ticker) {
+      return res.status(400).json({
+        success: false,
+        error: "Ticker is required.",
+      });
+    }
+
+    const tickerMap = await getSecTickerMap();
+    const company = tickerMap[ticker];
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        error: `Ticker ${ticker} was not found.`,
+      });
+    }
+
+    const submissionsResponse = await fetch(
+      `https://data.sec.gov/submissions/CIK${company.cik}.json`,
+      {
+        headers: {
+          "User-Agent":
+            "StrawFi research platform contact@example.com",
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (!submissionsResponse.ok) {
+      return res.status(502).json({
+        success: false,
+        error:
+          `SEC submissions request failed: ${submissionsResponse.status}`,
+      });
+    }
+
+    const submissionData =
+      await submissionsResponse.json();
+
+    const recent =
+      submissionData.filings?.recent || {};
+
+    const forms = recent.form || [];
+    const accessionNumbers =
+      recent.accessionNumber || [];
+    const filingDates =
+      recent.filingDate || [];
+    const reportDates =
+      recent.reportDate || [];
+    const primaryDocuments =
+      recent.primaryDocument || [];
+
+    const transactions = [];
+
+    for (
+      let i = 0;
+      i < forms.length && transactions.length < 50;
+      i++
+    ) {
+      const form = forms[i];
+
+      if (
+        !["3", "3/A", "4", "4/A", "5", "5/A"].includes(form)
+      ) {
+        continue;
+      }
+
+      const accession = accessionNumbers[i];
+
+      if (!accession) continue;
+
+      const accessionNoDash =
+        accession.replace(/-/g, "");
+
+      const primaryDocument =
+        primaryDocuments[i];
+
+      const filingUrl = primaryDocument
+        ? `https://www.sec.gov/Archives/edgar/data/${Number(
+            company.cik
+          )}/${accessionNoDash}/${primaryDocument}`
+        : `https://www.sec.gov/edgar/browse/?CIK=${Number(
+            company.cik
+          )}`;
+
+      let extracted = {
+        insiderName: "",
+        transactionType: "",
+        shares: null,
+        price: null,
+        value: null,
+        security: "",
+      };
+
+      // Form 4 filings normally contain an ownership XML document.
+      if (
+        primaryDocument &&
+        (form === "4" || form === "4/A")
+      ) {
+        try {
+          const filingResponse = await fetch(
+            filingUrl,
+            {
+              headers: {
+                "User-Agent":
+                  "StrawFi research platform contact@example.com",
+                Accept:
+                  "application/xml,text/xml,text/html",
+              },
+            }
+          );
+
+          if (filingResponse.ok) {
+            const filingText =
+              await filingResponse.text();
+
+            extracted.insiderName =
+              xmlTag(
+                filingText,
+                "rptOwnerName"
+              );
+
+            extracted.security =
+              xmlTag(
+                filingText,
+                "securityTitle"
+              );
+
+            const acquiredCode =
+              xmlTag(
+                filingText,
+                "transactionAcquiredDisposedCode"
+              );
+
+            extracted.shares =
+              xmlTagNumber(
+                filingText,
+                "transactionShares"
+              );
+
+            extracted.price =
+              xmlTagNumber(
+                filingText,
+                "transactionPricePerShare"
+              );
+
+            if (acquiredCode === "A") {
+              extracted.transactionType =
+                "Purchase";
+            } else if (acquiredCode === "D") {
+              extracted.transactionType =
+                "Sale";
+            }
+
+            if (
+              extracted.shares !== null &&
+              extracted.price !== null
+            ) {
+              extracted.value =
+                extracted.shares *
+                extracted.price;
+            }
+          }
+        } catch (parseError) {
+          console.warn(
+            "Unable to parse SEC ownership filing:",
+            accession,
+            parseError.message
+          );
+        }
+      }
+
+      transactions.push({
+        form,
+        filingDate:
+          filingDates[i] || "",
+        reportDate:
+          reportDates[i] || "",
+        accessionNumber:
+          accession,
+        insiderName:
+          extracted.insiderName || "",
+        transactionType:
+          extracted.transactionType || "",
+        shares: extracted.shares,
+        price: extracted.price,
+        value: extracted.value,
+        security: extracted.security || "",
+        url: filingUrl,
+      });
+    }
+
+    const purchases = transactions.filter(
+      (item) => item.transactionType === "Purchase"
+    ).length;
+
+    const sales = transactions.filter(
+      (item) => item.transactionType === "Sale"
+    ).length;
+
+    const totalPurchaseValue =
+      transactions
+        .filter(
+          (item) =>
+            item.transactionType === "Purchase"
+        )
+        .reduce(
+          (sum, item) => sum + (item.value || 0),
+          0
+        );
+
+    const totalSaleValue =
+      transactions
+        .filter(
+          (item) =>
+            item.transactionType === "Sale"
+        )
+        .reduce(
+          (sum, item) => sum + (item.value || 0),
+          0
+        );
+
+    return res.json({
+      success: true,
+      company: {
+        name: company.name,
+        cik: company.cik,
+        ticker,
+      },
+      summary: {
+        purchases,
+        sales,
+        totalPurchaseValue,
+        totalSaleValue,
+      },
+      transactions,
+    });
+  } catch (error) {
+    console.error(
+      "Insider transactions endpoint error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      error:
+        "Unable to retrieve SEC insider transaction data.",
+    });
+  }
+});
+
+// ---------- Regulation & Compliance / SEC RSS ----------
+
+app.get(
+  "/api/regulation-compliance",
+  async (req, res) => {
+    try {
+      const rssUrl =
+        "https://www.sec.gov/news/pressreleases.rss";
+
+      const response = await fetch(rssUrl, {
+        headers: {
+          "User-Agent":
+            "StrawFi research platform contact@example.com",
+          Accept:
+            "application/rss+xml, application/xml, text/xml",
+        },
+      });
+
+      if (!response.ok) {
+        return res.status(502).json({
+          success: false,
+          error:
+            `SEC RSS request failed: ${response.status}`,
+        });
+      }
+
+      const xml = await response.text();
+
+      const items = [];
+      const itemMatches =
+        xml.match(/<item\b[\s\S]*?<\/item>/gi) || [];
+
+      for (const itemXml of itemMatches.slice(0, 50)) {
+        const getTag = (tag) => {
+          const match = itemXml.match(
+            new RegExp(
+              `<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`,
+              "i"
+            )
+          );
+
+          return match
+            ? match[1]
+                .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+                .replace(/<[^>]+>/g, "")
+                .trim()
+            : "";
+        };
+
+        const title = getTag("title");
+        const description =
+          getTag("description");
+        const link = getTag("link");
+        const pubDate = getTag("pubDate");
+        const guid = getTag("guid");
+
+        if (!title) continue;
+
+        let category = "Other";
+        const lower = title.toLowerCase();
+
+        if (
+          lower.includes("rule") ||
+          lower.includes("regulation") ||
+          lower.includes("proposes") ||
+          lower.includes("adopts")
+        ) {
+          category = "Rules";
+        } else if (
+          lower.includes("charges") ||
+          lower.includes("fraud") ||
+          lower.includes("enforcement") ||
+          lower.includes("penalty")
+        ) {
+          category = "Enforcement";
+        } else if (
+          lower.includes("market") ||
+          lower.includes("trading") ||
+          lower.includes("exchange") ||
+          lower.includes("derivatives")
+        ) {
+          category = "Markets";
+        } else if (
+          lower.includes("reporting") ||
+          lower.includes("disclosure") ||
+          lower.includes("filing")
+        ) {
+          category = "Reporting";
+        }
+
+        items.push({
+          title,
+          description,
+          date: pubDate
+            ? new Date(pubDate).toLocaleDateString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                }
+              )
+            : "",
+          link,
+          guid,
+          category,
+        });
+      }
+
+      return res.json({
+        success: true,
+        items,
+      });
+    } catch (error) {
+      console.error(
+        "Regulation compliance feed error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        error:
+          "Unable to retrieve SEC regulatory developments.",
+      });
+    }
+  }
+);
+
+
+
+// ============================================================
+// ESG METRICS & DEVELOPMENTS
+// ============================================================
+
+const ESG_TERMS = {
+  Environmental: [
+    "climate",
+    "climate change",
+    "greenhouse gas",
+    "greenhouse gases",
+    "ghg emissions",
+    "carbon emissions",
+    "carbon footprint",
+    "carbon neutrality",
+    "net zero",
+    "emissions",
+    "scope 1",
+    "scope 2",
+    "scope 3",
+    "renewable energy",
+    "renewable electricity",
+    "clean energy",
+    "energy efficiency",
+    "water consumption",
+    "water management",
+    "waste management",
+    "recycling",
+    "biodiversity",
+    "environmental impact",
+    "environmental sustainability",
+    "sustainability",
+  ],
+
+  Social: [
+    "human rights",
+    "labor rights",
+    "employee health",
+    "employee safety",
+    "workplace safety",
+    "employee wellbeing",
+    "employee well-being",
+    "diversity",
+    "inclusion",
+    "diversity and inclusion",
+    "dei",
+    "equal opportunity",
+    "workforce",
+    "employee engagement",
+    "community investment",
+    "community development",
+    "social impact",
+    "customer privacy",
+    "data privacy",
+    "product safety",
+    "human capital",
+  ],
+
+  Governance: [
+    "corporate governance",
+    "board of directors",
+    "board diversity",
+    "audit committee",
+    "compensation committee",
+    "executive compensation",
+    "business ethics",
+    "code of conduct",
+    "anti-corruption",
+    "anti-bribery",
+    "compliance",
+    "cybersecurity",
+    "cyber security",
+    "data security",
+    "shareholder rights",
+    "risk management",
+    "governance practices",
+    "ethics",
+  ],
+};
+
+function decodeHtmlEntities(value = "") {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+}
+
+function htmlToPlainText(html = "") {
+  return decodeHtmlEntities(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+  ).trim();
+}
+
+function findESGMatches(text) {
+  const lowerText = text.toLowerCase();
+
+  const results = [];
+
+  for (const [category, terms] of Object.entries(
+    ESG_TERMS
+  )) {
+    const matchedTerms = terms.filter((term) =>
+      lowerText.includes(term.toLowerCase())
+    );
+
+    if (matchedTerms.length > 0) {
+      results.push({
+        category,
+        matchedTerms,
+      });
+    }
+  }
+
+  return results;
+}
+
+
+
+app.get("/api/esg-disclosures", async (req, res) => {
+  try {
+    const ticker = String(
+      req.query.ticker || ""
+    )
+      .trim()
+      .toUpperCase();
+
+    if (!ticker) {
+      return res.status(400).json({
+        success: false,
+        error: "Ticker is required.",
+      });
+    }
+
+    console.log(
+      `🌱 ESG scan requested for ${ticker}`
+    );
+
+    // --------------------------------------------------------
+    // 1. Resolve ticker -> CIK
+    // --------------------------------------------------------
+
+    const tickerMap = await getSecTickerMap();
+    const company = tickerMap[ticker];
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        error: `Ticker ${ticker} was not found in SEC company data.`,
+      });
+    }
+
+    // --------------------------------------------------------
+    // 2. Get company's recent SEC filing history
+    // --------------------------------------------------------
+
+    const submissionsResponse = await fetch(
+  `https://data.sec.gov/submissions/CIK${company.cik}.json`,
+  {
+    method: "GET",
+    headers: {
+      "User-Agent":
+        "StrawFi research platform contact@example.com",
+      Accept: "application/json",
+    },
+  }
+);
+
+    if (!submissionsResponse.ok) {
+      return res.status(502).json({
+        success: false,
+        error:
+          `SEC submissions request failed: ${submissionsResponse.status}`,
+      });
+    }
+
+    const submissionData =
+      await submissionsResponse.json();
+
+    const recent =
+      submissionData.filings?.recent || {};
+
+    const forms = recent.form || [];
+    const filingDates =
+      recent.filingDate || [];
+    const accessionNumbers =
+      recent.accessionNumber || [];
+    const primaryDocuments =
+      recent.primaryDocument || [];
+
+    // --------------------------------------------------------
+    // 3. Select recent filing documents to actually scan
+    // --------------------------------------------------------
+
+    const candidateFilings = [];
+
+    for (
+      let i = 0;
+      i < forms.length &&
+      candidateFilings.length < 8;
+      i++
+    ) {
+      const form = forms[i];
+
+      if (
+        ![
+          "10-K",
+          "10-K/A",
+          "10-Q",
+          "10-Q/A",
+          "8-K",
+          "8-K/A",
+        ].includes(form)
+      ) {
+        continue;
+      }
+
+      const accession =
+        accessionNumbers[i];
+
+      const document =
+        primaryDocuments[i];
+
+      if (!accession || !document) {
+        continue;
+      }
+
+      const accessionNoDash =
+        accession.replace(/-/g, "");
+
+      const filingUrl =
+        `https://www.sec.gov/Archives/edgar/data/${Number(
+          company.cik
+        )}/${accessionNoDash}/${document}`;
+
+      candidateFilings.push({
+        index: i,
+        form,
+        filingDate:
+          filingDates[i] || "",
+        accession,
+        document,
+        filingUrl,
+      });
+    }
+
+    console.log(
+      `🌱 Scanning ${candidateFilings.length} SEC filings for ${ticker}`
+    );
+
+    // --------------------------------------------------------
+    // 4. Fetch and scan the actual filing documents
+    // --------------------------------------------------------
+
+    const scannedResults =
+      await Promise.all(
+        candidateFilings.map(
+          async (filing) => {
+            try {
+  const filingResponse =
+    await fetch(
+      filing.filingUrl,
+      {
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "StrawFi research platform contact@example.com",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml,text/xml",
+        },
+      }
+    );
+              if (!filingResponse.ok) {
+                console.warn(
+                  `⚠️ ESG filing fetch failed ${filing.accession}: ${filingResponse.status}`
+                );
+
+                return null;
+              }
+
+              const html =
+                await filingResponse.text();
+
+              const text =
+                htmlToPlainText(html);
+
+              if (!text) {
+                return null;
+              }
+
+              const matches =
+                findESGMatches(text);
+
+              if (
+                matches.length === 0
+              ) {
+                return null;
+              }
+
+              return {
+                filing,
+                matches,
+              };
+            } catch (error) {
+              console.warn(
+                `⚠️ ESG filing scan failed ${filing.accession}:`,
+                error?.message || error
+              );
+
+              return null;
+            }  
+          }
+        )
+      );
+
+    // --------------------------------------------------------
+    // 5. Convert scan results into frontend disclosures
+    // --------------------------------------------------------
+
+    const disclosures = [];
+
+    for (const result of scannedResults) {
+      if (!result) {
+        continue;
+      }
+
+      for (const match of result.matches) {
+        disclosures.push({
+          form: result.filing.form,
+
+          filingDate:
+            result.filing.filingDate,
+
+          title:
+            `${match.category} disclosure detected in ${result.filing.form}`,
+
+          category:
+            match.category,
+
+          matchedTerms:
+            match.matchedTerms.slice(0, 8),
+
+          url:
+            result.filing.filingUrl,
+        });
+      }
+    }
+
+    // --------------------------------------------------------
+    // 6. Remove duplicate category/filing combinations
+    // --------------------------------------------------------
+
+    const uniqueDisclosures =
+      Array.from(
+        new Map(
+          disclosures.map((item) => [
+            `${item.form}-${item.filingDate}-${item.category}`,
+            item,
+          ])
+        ).values()
+      );
+
+    console.log(
+      `✅ ESG scan complete for ${ticker}: ${uniqueDisclosures.length} disclosures`
+    );
+
+    return res.json({
+      success: true,
+
+      company: {
+        name: company.name,
+        ticker,
+        cik: company.cik,
+      },
+
+      disclosures:
+        uniqueDisclosures,
+
+      tracking: {
+        checkedAt:
+          new Date().toISOString(),
+
+        filingsScanned:
+          candidateFilings.length,
+
+        nextRecommendedCheck:
+          new Date(
+            Date.now() + 5 * 60 * 1000
+          ).toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error(
+      "❌ ESG disclosure endpoint error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      error:
+        "Unable to retrieve ESG disclosures.",
+    });
+  }
+});
 
 startServer();

@@ -47,8 +47,18 @@ export const teamService = {
     }
 
     const data = await response.json();
-    console.log('✅ Team login response:', data);
-    return data;
+
+console.log('✅ Team login response:', data);
+
+if (data.token) {
+  localStorage.setItem('teamJwt', data.token);
+  localStorage.setItem('teamId', data.team_id);
+  localStorage.setItem('teamName', data.team_name);
+
+  console.log('✅ Team JWT saved successfully');
+}
+
+return data;
   },
 
   async createTeam(teamData: TeamCreateRequest): Promise<TeamCreateResponse> {
