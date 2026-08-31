@@ -1,0 +1,287 @@
+### User:
+What is EBITDA?
+
+### Assistant:
+EBITDA stands for Earnings Before Interest, Taxes, Depreciation, and Amortization. It is commonly used as a measure of operating performance before financing costs, taxes, and certain non-cash expenses.
+
+### User:
+Why is EBITDA useful when analysing a company?
+
+### Assistant:
+EBITDA can help compare operating performance across companies with different capital structures and depreciation policies. It is useful as one analytical metric, but it should not be treated as a substitute for cash flow or net income.
+
+### User:
+What is revenue?
+
+### Assistant:
+Revenue is the income a company earns from selling goods or services before operating expenses, interest, taxes, and other costs are deducted.
+
+### User:
+What is profit?
+
+### Assistant:
+Profit is the amount remaining after a company subtracts its expenses from its revenue. Different measures include gross profit, operating profit, and net profit.
+
+### User:
+What is free cash flow?
+
+### Assistant:
+Free cash flow is the cash a business generates after accounting for capital expenditures required to maintain or grow the business. It can be useful when evaluating a company's ability to fund growth, repay debt, return capital, or build cash reserves.
+
+### User:
+What is a P/E ratio?
+
+### Assistant:
+The price-to-earnings ratio compares a company's market price per share with its earnings per share. Investors often use it as one valuation measure when comparing companies or assessing expectations embedded in a share price.
+
+### User:
+What can a high P/E ratio mean?
+
+### Assistant:
+A high P/E ratio can indicate that investors expect stronger future earnings growth, lower perceived risk, or other favourable business conditions. A high ratio can also mean a stock is expensive relative to its current earnings, so it should be interpreted alongside growth, profitability, risk, and peer valuations.
+
+### User:
+What is market capitalization?
+
+### Assistant:
+Market capitalization is the market value of a company's outstanding equity. It is generally calculated as the share price multiplied by the number of outstanding shares.
+
+### User:
+What is a DCF?
+
+### Assistant:
+Discounted cash flow is a valuation method that estimates the present value of expected future cash flows by discounting them back to today's value using an appropriate discount rate.
+
+### User:
+What are the main components of a DCF?
+
+### Assistant:
+A DCF generally involves forecasting future cash flows, selecting a discount rate, calculating terminal value, and discounting the forecast cash flows and terminal value to the present.
+
+### User:
+What is WACC?
+
+### Assistant:
+Weighted average cost of capital is a blended required return reflecting a company's sources of debt and equity financing. It is commonly used as a discount rate in certain DCF analyses.
+
+### User:
+What is terminal value?
+
+### Assistant:
+Terminal value estimates the value of a business beyond the explicit forecast period in a valuation model. Common approaches include a perpetuity-growth method and an exit-multiple method.
+
+### User:
+What is an investment thesis?
+
+### Assistant:
+An investment thesis is a structured explanation of why an investor believes an investment may perform well or poorly. It should identify the supporting evidence, important assumptions, catalysts, and key risks.
+
+### User:
+What makes a strong investment thesis?
+
+### Assistant:
+A strong investment thesis is specific, evidence-based, falsifiable, and tied to measurable drivers. It should explain why the opportunity exists, what could change the market's view, and what would prove the thesis wrong.
+
+### User:
+What is diversification?
+
+### Assistant:
+Diversification means spreading investments across different assets, companies, sectors, or markets to reduce concentration risk. It can reduce the impact of a poor outcome in one investment, although it cannot eliminate overall market risk.
+
+### User:
+What is investment risk?
+
+### Assistant:
+Investment risk is the possibility that actual results differ from expectations, including the possibility of losing some or all invested capital. Different investments have different sources and levels of risk.
+
+### User:
+What is a bull market?
+
+### Assistant:
+A bull market is a sustained period of generally rising asset prices and positive investor sentiment.
+
+### User:
+What is a bear market?
+
+### Assistant:
+A bear market is a sustained period of generally declining asset prices and weaker investor sentiment.
+
+### User:
+Why should investors compare companies with peers?
+
+### Assistant:
+Peer comparison helps investors understand whether a company's growth, margins, valuation, leverage, and other metrics are strong or weak relative to similar businesses. Comparisons should use appropriate peers rather than unrelated companies.
+
+### User:
+What is revenue growth?
+
+### Assistant:
+Revenue growth measures how a company's revenue changes over time. It can be calculated year over year, quarter over quarter, or using another defined period.
+
+### User:
+What is EBITDA margin?
+
+### Assistant:
+EBITDA margin is EBITDA divided by revenue. It expresses operating earnings before the excluded items as a percentage of revenue and can help analyse changes in operating efficiency.
+
+### User:
+What does declining EBITDA margin indicate?
+
+### Assistant:
+A declining EBITDA margin can indicate that operating costs are growing faster than revenue, pricing power is weakening, the product mix is changing, or other pressures are affecting profitability. The underlying cause should be investigated rather than assumed.
+
+### User:
+What is debt-to-equity ratio?
+
+### Assistant:
+Debt-to-equity ratio compares a company's debt with shareholders' equity. It is commonly used as one indicator of financial leverage and capital structure.
+
+### User:
+Why is cash flow important?
+
+### Assistant:
+Cash flow matters because a company ultimately needs cash to fund operations, investments, debt obligations, and distributions. Strong accounting profits without healthy cash generation may require additional investigation.
+
+### User:
+How should an investor analyse a company?
+
+### Assistant:
+A structured analysis can include the company's business model, industry, revenue growth, profitability, cash flow, balance sheet, valuation, competitive position, management, catalysts, and risks. No single metric is sufficient on its own.
+
+### User:
+What is a catalyst?
+
+### Assistant:
+A catalyst is an event or development that could materially change investor expectations about a company. Examples can include earnings releases, new products, regulatory decisions, acquisitions, or major changes in industry conditions.
+
+### User:
+What is a financial model?
+
+### Assistant:
+A financial model is a quantitative representation of a business used to analyse historical performance, create forecasts, test scenarios, and estimate valuation.
+
+### User:
+What is scenario analysis?
+
+### Assistant:
+Scenario analysis evaluates how an investment or valuation changes under different assumptions, such as optimistic, base, and pessimistic cases.
+
+### User:
+Why should investors use scenarios instead of one forecast?
+
+### Assistant:
+Using scenarios recognises uncertainty and shows how sensitive an investment decision is to key assumptions. It can reveal which variables matter most to the outcome.
+
+### User:
+What is intrinsic value?
+
+### Assistant:
+Intrinsic value is an estimate of what an asset or business may be worth based on its expected economics, cash flows, assets, or other fundamental factors rather than only its current market price.
+
+### User:
+What does undervalued mean?
+
+### Assistant:
+An investment is described as undervalued when its estimated fundamental value is considered higher than its current market price. Because intrinsic value depends on assumptions, undervaluation should be treated as a hypothesis rather than a certainty.
+
+### User:
+What does overvalued mean?
+
+### Assistant:
+An investment is described as overvalued when its market price appears higher than an analyst's estimate of fundamental value. That conclusion depends on the quality of the valuation assumptions.
+
+### User:
+Why can a stock fall even when earnings increase?
+
+### Assistant:
+A stock can decline despite higher earnings if investor expectations were even higher, valuation multiples contract, guidance weakens, risk perception increases, or other information changes the market's outlook.
+
+### User:
+What is margin expansion?
+
+### Assistant:
+Margin expansion occurs when a company's profitability margin increases over time. It can result from pricing improvements, operating leverage, better product mix, cost reductions, or other efficiency gains.
+
+### User:
+What is operating leverage?
+
+### Assistant:
+Operating leverage describes how changes in revenue can affect operating profit when a business has significant fixed costs. Higher operating leverage can amplify both profit growth and profit declines.
+
+### User:
+How should an investor think about risk and return?
+
+### Assistant:
+Investors generally seek compensation for taking risk, but higher risk does not guarantee higher returns. Risk should be assessed in relation to the probability and magnitude of different outcomes.
+
+### User:
+What should an investor do when the data is incomplete?
+
+### Assistant:
+When data is incomplete, an investor should identify what is known, what is uncertain, what assumptions are being made, and which missing information could change the conclusion. Uncertainty should be communicated explicitly rather than hidden.
+
+### User:
+Should investors rely on one financial ratio?
+
+### Assistant:
+No. A single ratio rarely gives enough context. Ratios should be interpreted alongside business quality, growth, profitability, cash flow, leverage, valuation, industry conditions, and risk.
+
+### User:
+How should an analyst communicate an investment conclusion?
+
+### Assistant:
+An analyst should clearly state the conclusion, the main supporting evidence, the assumptions behind it, the key risks, and what evidence could invalidate the conclusion.
+
+### User:
+Can financial analysis guarantee profits?
+
+### Assistant:
+No. Financial analysis can help evaluate opportunities and risks, but it cannot guarantee investment returns. Markets are uncertain and actual outcomes can differ substantially from expectations.
+
+### User:
+What is the purpose of StrawFi?
+
+### Assistant:
+StrawFi is designed to help investors and research teams organise financial information, analyse companies, build financial models, track relevant developments, and turn research into structured investment decisions.
+
+### User:
+How should StrawFi answer financial questions?
+
+### Assistant:
+StrawFi should provide clear, evidence-oriented analysis, distinguish facts from assumptions, explain uncertainty, avoid guaranteeing returns, and encourage users to evaluate risks before making investment decisions.
+
+### User:
+What should a Traditionalist investor focus on?
+
+### Assistant:
+A Traditionalist investor may prefer established businesses, durable competitive advantages, consistent profitability, valuation discipline, strong balance sheets, and long-term fundamentals.
+
+### User:
+What should an Innovator investor focus on?
+
+### Assistant:
+An Innovator investor may focus more on emerging technologies, disruptive business models, high-growth markets, product innovation, and the potential for structural change while still evaluating valuation and risk.
+
+### User:
+What should an Adventurer investor focus on?
+
+### Assistant:
+An Adventurer investor may tolerate higher volatility and greater uncertainty in pursuit of potentially higher returns, but should still define risks, position sizes, and conditions that would invalidate the investment thesis.
+
+### User:
+What should an Athlete investor focus on?
+
+### Assistant:
+An Athlete investor may emphasise measurable goals, disciplined processes, consistent execution, performance tracking, and clear decision rules.
+
+### User:
+What should an Artist investor focus on?
+
+### Assistant:
+An Artist investor may use a more creative and independent approach, looking for overlooked patterns, differentiated perspectives, and opportunities that may not be obvious from standard frameworks.
+
+### User:
+What should an Environmentallist investor focus on?
+
+### Assistant:
+An Environmentallist investor may place greater weight on sustainability, long-term impact, responsible business practices, and alignment between financial objectives and environmental principles.

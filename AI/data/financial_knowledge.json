@@ -1,0 +1,360 @@
+[
+  {
+    "id": "ebitda",
+    "topic": "EBITDA",
+    "category": "financial_metrics",
+    "keywords": [
+      "ebitda",
+      "operating performance",
+      "earnings before interest",
+      "depreciation",
+      "amortization"
+    ],
+    "definition": "EBITDA stands for Earnings Before Interest, Taxes, Depreciation, and Amortization. It is commonly used as a measure of operating performance before financing costs, taxes, and certain non-cash expenses.",
+    "why_it_matters": "EBITDA can help compare operating performance across companies with different capital structures and depreciation policies.",
+    "limitations": "EBITDA is not the same as cash flow or net income and should not be used as a standalone measure of financial health."
+  },
+  {
+    "id": "revenue",
+    "topic": "Revenue",
+    "category": "financial_metrics",
+    "keywords": [
+      "revenue",
+      "sales",
+      "income",
+      "top line"
+    ],
+    "definition": "Revenue is the income a company earns from selling goods or services before operating expenses, interest, taxes, and other costs are deducted.",
+    "why_it_matters": "Revenue growth provides an important indication of changes in the scale of a company's business.",
+    "limitations": "Revenue alone does not indicate profitability or cash generation."
+  },
+  {
+    "id": "profit",
+    "topic": "Profit",
+    "category": "financial_metrics",
+    "keywords": [
+      "profit",
+      "net income",
+      "earnings",
+      "bottom line"
+    ],
+    "definition": "Profit is the amount remaining after a company subtracts its expenses from its revenue.",
+    "why_it_matters": "Profit indicates whether a business is generating earnings after its costs.",
+    "limitations": "Profit can be affected by accounting policies and non-cash items, so it should be considered alongside cash flow."
+  },
+  {
+    "id": "pe_ratio",
+    "topic": "P/E Ratio",
+    "category": "valuation",
+    "keywords": [
+      "p/e",
+      "pe",
+      "price earnings",
+      "price to earnings",
+      "valuation"
+    ],
+    "definition": "The price-to-earnings ratio compares a company's market price per share with its earnings per share.",
+    "why_it_matters": "Investors commonly use P/E as one measure of valuation and expectations about future earnings.",
+    "limitations": "P/E should be considered alongside growth, profitability, risk, business quality, and peer valuations."
+  },
+  {
+    "id": "dcf",
+    "topic": "DCF",
+    "category": "valuation",
+    "keywords": [
+      "dcf",
+      "discounted cash flow",
+      "cash flow valuation",
+      "intrinsic value"
+    ],
+    "definition": "Discounted cash flow is a valuation method that estimates the present value of expected future cash flows by discounting them using an appropriate discount rate.",
+    "why_it_matters": "DCF can help investors estimate fundamental value based on expected future cash generation.",
+    "limitations": "DCF results are highly sensitive to assumptions such as growth, margins, discount rate, and terminal growth."
+  },
+  {
+    "id": "wacc",
+    "topic": "WACC",
+    "category": "valuation",
+    "keywords": [
+      "wacc",
+      "weighted average cost of capital",
+      "discount rate",
+      "cost of capital"
+    ],
+    "definition": "Weighted average cost of capital is a blended required return reflecting a company's sources of debt and equity financing.",
+    "why_it_matters": "WACC is commonly used as a discount rate in certain DCF analyses.",
+    "limitations": "The calculated WACC depends on assumptions about financing structure, cost of debt, cost of equity, and market conditions."
+  },
+  {
+    "id": "terminal_value",
+    "topic": "Terminal Value",
+    "category": "valuation",
+    "keywords": [
+      "terminal value",
+      "perpetuity growth",
+      "exit multiple",
+      "dcf"
+    ],
+    "definition": "Terminal value estimates the value of a business beyond the explicit forecast period in a valuation model.",
+    "why_it_matters": "Terminal value captures the value of cash flows expected after the detailed forecast period.",
+    "limitations": "Terminal value can represent a large part of a DCF valuation and is sensitive to assumptions."
+  },
+  {
+    "id": "free_cash_flow",
+    "topic": "Free Cash Flow",
+    "category": "cash_flow",
+    "keywords": [
+      "free cash flow",
+      "fcf",
+      "cash generation",
+      "capital expenditure"
+    ],
+    "definition": "Free cash flow is the cash a business generates after accounting for capital expenditures required to maintain or grow the business.",
+    "why_it_matters": "Free cash flow can indicate the cash available to fund growth, repay debt, return capital, or build reserves.",
+    "limitations": "Free cash flow can vary significantly between periods because of working capital and investment cycles."
+  },
+  {
+    "id": "market_cap",
+    "topic": "Market Capitalization",
+    "category": "market_data",
+    "keywords": [
+      "market cap",
+      "market capitalization",
+      "company value",
+      "equity value"
+    ],
+    "definition": "Market capitalization is the market value of a company's outstanding equity.",
+    "why_it_matters": "It provides a simple measure of the market value assigned to a company's equity.",
+    "limitations": "Market capitalization does not include debt and therefore is not the same as enterprise value."
+  },
+  {
+    "id": "debt_to_equity",
+    "topic": "Debt-to-Equity Ratio",
+    "category": "risk",
+    "keywords": [
+      "debt to equity",
+      "d/e",
+      "leverage",
+      "financial leverage"
+    ],
+    "definition": "Debt-to-equity ratio compares a company's debt with shareholders' equity.",
+    "why_it_matters": "It is commonly used as one indicator of financial leverage and capital structure.",
+    "limitations": "Appropriate debt levels differ across industries, so the ratio should generally be compared with relevant peers."
+  },
+  {
+    "id": "investment_risk",
+    "topic": "Investment Risk",
+    "category": "risk",
+    "keywords": [
+      "risk",
+      "investment risk",
+      "loss",
+      "volatility",
+      "uncertainty"
+    ],
+    "definition": "Investment risk is the possibility that actual results differ from expectations, including the possibility of losing some or all invested capital.",
+    "why_it_matters": "Understanding risk helps investors evaluate downside scenarios and position investments appropriately.",
+    "limitations": "Risk cannot be eliminated completely through analysis or diversification."
+  },
+  {
+    "id": "diversification",
+    "topic": "Diversification",
+    "category": "portfolio",
+    "keywords": [
+      "diversification",
+      "portfolio",
+      "concentration",
+      "asset allocation"
+    ],
+    "definition": "Diversification means spreading investments across different assets, companies, sectors, or markets to reduce concentration risk.",
+    "why_it_matters": "Diversification can reduce the impact of a poor outcome in one investment.",
+    "limitations": "Diversification cannot eliminate overall market risk."
+  },
+  {
+    "id": "investment_thesis",
+    "topic": "Investment Thesis",
+    "category": "research",
+    "keywords": [
+      "investment thesis",
+      "thesis",
+      "investment case",
+      "bull case",
+      "bear case"
+    ],
+    "definition": "An investment thesis is a structured explanation of why an investor believes an investment may perform well or poorly.",
+    "why_it_matters": "A good thesis connects evidence, assumptions, catalysts, and risks into a clear investment argument.",
+    "limitations": "A thesis is a hypothesis rather than a guarantee and can be invalidated by new evidence."
+  },
+  {
+    "id": "scenario_analysis",
+    "topic": "Scenario Analysis",
+    "category": "financial_modeling",
+    "keywords": [
+      "scenario analysis",
+      "base case",
+      "bull case",
+      "bear case",
+      "sensitivity"
+    ],
+    "definition": "Scenario analysis evaluates how an investment or valuation changes under different assumptions.",
+    "why_it_matters": "It helps investors understand uncertainty and identify which assumptions have the greatest effect on the outcome.",
+    "limitations": "Scenario results depend entirely on the assumptions used."
+  },
+  {
+    "id": "financial_model",
+    "topic": "Financial Model",
+    "category": "financial_modeling",
+    "keywords": [
+      "financial model",
+      "forecast",
+      "valuation model",
+      "financial forecasting"
+    ],
+    "definition": "A financial model is a quantitative representation of a business used to analyse historical performance, create forecasts, test scenarios, and estimate valuation.",
+    "why_it_matters": "Financial models allow analysts to connect assumptions with measurable financial outcomes.",
+    "limitations": "A model is only as reliable as its assumptions and input data."
+  },
+  {
+    "id": "revenue_growth",
+    "topic": "Revenue Growth",
+    "category": "financial_metrics",
+    "keywords": [
+      "revenue growth",
+      "sales growth",
+      "yoy growth",
+      "growth rate"
+    ],
+    "definition": "Revenue growth measures how a company's revenue changes over a defined period.",
+    "why_it_matters": "It provides insight into whether the scale of the business is expanding or contracting.",
+    "limitations": "Growth should be considered alongside profitability, cash flow, and the quality and sustainability of the underlying revenue."
+  },
+  {
+    "id": "ebitda_margin",
+    "topic": "EBITDA Margin",
+    "category": "financial_metrics",
+    "keywords": [
+      "ebitda margin",
+      "margin",
+      "profitability",
+      "operating margin"
+    ],
+    "definition": "EBITDA margin is EBITDA divided by revenue and expresses EBITDA as a percentage of revenue.",
+    "why_it_matters": "It can help analyse operating efficiency and compare profitability across periods or peers.",
+    "limitations": "Changes in EBITDA margin should be investigated to understand whether they are caused by pricing, costs, product mix, or other factors."
+  },
+  {
+    "id": "margin_expansion",
+    "topic": "Margin Expansion",
+    "category": "financial_metrics",
+    "keywords": [
+      "margin expansion",
+      "profitability",
+      "operating leverage",
+      "cost efficiency"
+    ],
+    "definition": "Margin expansion occurs when a company's profitability margin increases over time.",
+    "why_it_matters": "It can indicate improving pricing, operating leverage, product mix, or cost efficiency.",
+    "limitations": "A temporary margin increase may not be sustainable."
+  },
+  {
+    "id": "operating_leverage",
+    "topic": "Operating Leverage",
+    "category": "financial_metrics",
+    "keywords": [
+      "operating leverage",
+      "fixed costs",
+      "profit growth",
+      "cost structure"
+    ],
+    "definition": "Operating leverage describes how changes in revenue can affect operating profit when a business has significant fixed costs.",
+    "why_it_matters": "High operating leverage can amplify the effect of revenue changes on operating profit.",
+    "limitations": "Operating leverage can amplify both positive and negative changes in profitability."
+  },
+  {
+    "id": "catalyst",
+    "topic": "Catalyst",
+    "category": "research",
+    "keywords": [
+      "catalyst",
+      "earnings",
+      "product launch",
+      "regulation",
+      "acquisition"
+    ],
+    "definition": "A catalyst is an event or development that could materially change investor expectations about a company.",
+    "why_it_matters": "Catalysts can change the market's perception of a company's future earnings, risks, or valuation.",
+    "limitations": "The timing and market impact of a catalyst are uncertain."
+  },
+  {
+    "id": "intrinsic_value",
+    "topic": "Intrinsic Value",
+    "category": "valuation",
+    "keywords": [
+      "intrinsic value",
+      "fair value",
+      "fundamental value",
+      "valuation"
+    ],
+    "definition": "Intrinsic value is an estimate of what an asset or business may be worth based on its expected economics, cash flows, assets, or other fundamental factors.",
+    "why_it_matters": "It provides a framework for comparing estimated fundamental value with the current market price.",
+    "limitations": "Intrinsic value depends heavily on assumptions and is therefore an estimate rather than a guaranteed fact."
+  },
+  {
+    "id": "bull_market",
+    "topic": "Bull Market",
+    "category": "market_conditions",
+    "keywords": [
+      "bull market",
+      "rising market",
+      "positive sentiment",
+      "market rally"
+    ],
+    "definition": "A bull market is a sustained period of generally rising asset prices and positive investor sentiment.",
+    "why_it_matters": "Bull markets can influence valuations, investor behaviour, and market risk appetite.",
+    "limitations": "Strong market performance can reverse, and a bull market does not imply that every asset will rise."
+  },
+  {
+    "id": "bear_market",
+    "topic": "Bear Market",
+    "category": "market_conditions",
+    "keywords": [
+      "bear market",
+      "falling market",
+      "negative sentiment",
+      "market decline"
+    ],
+    "definition": "A bear market is a sustained period of generally declining asset prices and weaker investor sentiment.",
+    "why_it_matters": "Bear markets can reveal business resilience and increase the importance of downside risk analysis.",
+    "limitations": "Market declines affect companies differently and do not automatically mean every investment is unattractive."
+  },
+  {
+    "id": "peer_comparison",
+    "topic": "Peer Comparison",
+    "category": "analysis",
+    "keywords": [
+      "peer comparison",
+      "comparables",
+      "peers",
+      "industry comparison",
+      "relative valuation"
+    ],
+    "definition": "Peer comparison evaluates a company's financial performance, valuation, leverage, or other characteristics relative to similar businesses.",
+    "why_it_matters": "It helps investors assess whether a company's metrics appear strong or weak relative to relevant competitors.",
+    "limitations": "Poorly selected peers can lead to misleading conclusions."
+  },
+  {
+    "id": "data_uncertainty",
+    "topic": "Incomplete Data",
+    "category": "research_quality",
+    "keywords": [
+      "incomplete data",
+      "uncertainty",
+      "missing information",
+      "assumptions",
+      "research quality"
+    ],
+    "definition": "When financial data is incomplete, the analyst should distinguish known information from assumptions and identify the missing information that could change the conclusion.",
+    "why_it_matters": "Explicitly handling uncertainty reduces the risk of presenting assumptions as facts.",
+    "limitations": "No analysis can completely eliminate uncertainty."
+  }
+]

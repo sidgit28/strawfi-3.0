@@ -1,11 +1,7 @@
 // Load environment variables FIRST
 require('dotenv').config();
 
-const { OpenAI } = require('openai');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 // Simple Express server for the strawfi API
 const express  = require('express');
@@ -20,6 +16,106 @@ const { createClient } = require('@supabase/supabase-js');
 const { createServer } = require('http');
 const WebSocket = require('ws');
 const bcrypt = require('bcrypt'); // Add at the top if not present
+const STRAWFI_AI_URL =
+  process.env.STRAWFI_AI_URL || 'http://127.0.0.1:5001/generate';
+
+  // =====================================================
+// 🤖 StrawFi AI usage limits
+// =====================================================
+
+const CHAT_DAILY_LIMIT = 6;
+
+// Initial buildathon usage store.
+// Key format: identity|YYYY-MM-DD
+const chatUsage = new Map();
+
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getChatIdentity(req) {
+  const clientId = String(
+    req.body?.clientId || ''
+  ).trim();
+
+  if (clientId) {
+    return `client:${clientId}`;
+  }
+
+  const forwardedFor = String(
+    req.headers['x-forwarded-for'] || ''
+  )
+    .split(',')[0]
+    .trim();
+
+  const ip =
+    forwardedFor ||
+    req.socket?.remoteAddress ||
+    'unknown';
+
+  return `ip:${ip}`;
+}
+
+function getChatUsage(req) {
+  const key =
+    `${getChatIdentity(req)}|${getTodayKey()}`;
+
+  const used =
+    chatUsage.get(key) || 0;
+
+  return {
+    key,
+    used,
+    remaining: Math.max(
+      CHAT_DAILY_LIMIT - used,
+      0
+    )
+  };
+}
+
+function reserveChatUsage(req) {
+  const usage =
+    getChatUsage(req);
+
+  if (usage.remaining <= 0) {
+    return {
+      allowed: false,
+      ...usage
+    };
+  }
+
+  const newUsed =
+    usage.used + 1;
+
+  chatUsage.set(
+    usage.key,
+    newUsed
+  );
+
+  return {
+    allowed: true,
+    key: usage.key,
+    used: newUsed,
+    remaining:
+      CHAT_DAILY_LIMIT - newUsed
+  };
+}
+
+function rollbackChatUsage(key) {
+  const current =
+    chatUsage.get(key) || 0;
+
+  if (current <= 1) {
+    chatUsage.delete(key);
+    return;
+  }
+
+  chatUsage.set(
+    key,
+    current - 1
+  );
+}
+
 
 // Environment validation
 const requiredEnvVars = {
@@ -46,6 +142,54 @@ const app  = express();
 const server = createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3001;
+
+// =====================================================
+// 🤖 Chat usage status
+// =====================================================
+
+app.get('/api/chat/usage', (req, res) => {
+  try {
+    const clientId = String(
+      req.query.clientId || ''
+    ).trim();
+
+    if (!clientId) {
+      return res.status(400).json({
+        error: 'clientId is required'
+      });
+    }
+
+    const key =
+      `client:${clientId}|${getTodayKey()}`;
+
+    const used =
+      chatUsage.get(key) || 0;
+
+    const remaining =
+      Math.max(
+        CHAT_DAILY_LIMIT - used,
+        0
+      );
+
+    return res.json({
+      limit: CHAT_DAILY_LIMIT,
+      used,
+      remaining
+    });
+
+  } catch (error) {
+    console.error(
+      '❌ Chat usage lookup error:',
+      error
+    );
+
+    return res.status(500).json({
+      error:
+        'Unable to retrieve chat usage'
+    });
+  }
+});
+
 
 // ---------- CORS ----------
 const corsOptions = {
@@ -555,90 +699,236 @@ app.get ('/api/research/:id/versions', authenticateTeamToken, researchRoutes.get
 app.post('/api/research/:id/version', authenticateTeamToken, researchRoutes.createResearchVersion);
 
 // =====================================================
-// 🤖 CHATBOT API
+// 🤖 CHATBOT API — LOCAL STRAWFI AI
 // =====================================================
 
 app.post('/api/chat', async (req, res) => {
+  let usageReservation = null;
+
   try {
-    console.log('🤖 Chatbot request received');
+    console.log(
+      '🤖 StrawFi chatbot request received'
+    );
 
-    const { message, persona } = req.body;
+    const {
+      message,
+      persona,
+      history = [],
+      clientId
+    } = req.body;
 
-    console.log('💬 Message:', message);
-    console.log('👤 Persona:', persona);
+    console.log(
+      '💬 Message:',
+      message
+    );
 
-    if (!message || !message.trim()) {
+    console.log(
+      '👤 Persona:',
+      persona
+    );
+
+    console.log(
+      '🧠 History messages:',
+      Array.isArray(history)
+        ? history.length
+        : 0
+    );
+
+    // -------------------------------------------------
+    // Validate request
+    // -------------------------------------------------
+
+    if (
+      !message ||
+      !String(message).trim()
+    ) {
       return res.status(400).json({
         error: 'Message is required'
       });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('❌ OPENAI_API_KEY is missing');
-
-      return res.status(500).json({
-        error: 'OpenAI API key is not configured'
+    if (!Array.isArray(history)) {
+      return res.status(400).json({
+        error: 'History must be an array'
       });
     }
 
-    console.log('🧠 Sending request to OpenAI...');
+    // -------------------------------------------------
+    // Reserve one AI question
+    // -------------------------------------------------
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
+    usageReservation =
+      reserveChatUsage(req);
+
+    console.log(
+      '📊 Chat usage:',
+      `${usageReservation.used}/${CHAT_DAILY_LIMIT}`
+    );
+
+    if (!usageReservation.allowed) {
+      return res.status(429).json({
+        error:
+          'Daily AI question limit reached',
+        message:
+          `You have used all ${CHAT_DAILY_LIMIT} StrawFi AI questions for today.`,
+        limit: CHAT_DAILY_LIMIT,
+        used: CHAT_DAILY_LIMIT,
+        remaining: 0,
+      });
+    }
+
+    // -------------------------------------------------
+    // Limit conversation context
+    // -------------------------------------------------
+
+    const recentHistory =
+      history
+        .slice(-6)
+        .map((item) => ({
+          role:
+            item?.role === 'assistant'
+              ? 'assistant'
+              : 'user',
+          content: String(
+            item?.content || ''
+          ).slice(0, 2000)
+        }))
+        .filter(
+          (item) =>
+            item.content.trim()
+        );
+
+    console.log(
+      '📡 Sending request to local StrawFi AI:',
+      STRAWFI_AI_URL
+    );
+
+    // -------------------------------------------------
+    // Call local StrawFi AI
+    // -------------------------------------------------
+
+    const aiResponse =
+      await fetch(
+        STRAWFI_AI_URL,
         {
-          role: 'system',
-          content: `You are FinBot, the financial assistant for StrawFi.
-
-The user's investing persona is:
-${persona || 'general investor'}
-
-Give clear, helpful and easy-to-understand financial explanations.
-
-Do not guarantee profits or present financial information as guaranteed advice.`
-        },
-        {
-          role: 'user',
-          content: message
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body: JSON.stringify({
+            message:
+              String(message).trim(),
+            persona:
+              persona ||
+              'general investor',
+            history:
+              recentHistory
+          })
         }
-      ],
-      temperature: 0.7
-    });
+      );
+
+    // -------------------------------------------------
+    // Local AI error
+    // -------------------------------------------------
+
+    if (!aiResponse.ok) {
+      const errorText =
+        await aiResponse
+          .text()
+          .catch(
+            () =>
+              'Unknown AI server error'
+          );
+
+      console.error(
+        `❌ Local AI server failed [${aiResponse.status}]:`,
+        errorText
+      );
+
+      // AI failed, so don't charge the user.
+      if (usageReservation?.key) {
+        rollbackChatUsage(
+          usageReservation.key
+        );
+        usageReservation = null;
+      }
+
+      return res.status(502).json({
+        error:
+          'StrawFi AI server unavailable',
+        details:
+          process.env.NODE_ENV ===
+          'development'
+            ? errorText
+            : undefined
+      });
+    }
+
+    const data =
+      await aiResponse.json();
 
     const response =
-      completion.choices?.[0]?.message?.content ||
-      'Sorry, I could not generate a response.';
+      String(
+        data?.response || ''
+      ).trim();
 
-    console.log('✅ OpenAI response received');
+    if (!response) {
+      if (usageReservation?.key) {
+        rollbackChatUsage(
+          usageReservation.key
+        );
+        usageReservation = null;
+      }
+
+      return res.status(502).json({
+        error:
+          'StrawFi AI returned an empty response'
+      });
+    }
+
+    console.log(
+      '✅ StrawFi local AI response received'
+    );
+
+    // -------------------------------------------------
+    // Success
+    // -------------------------------------------------
 
     return res.json({
-      response
+      response,
+      usage: {
+        limit: CHAT_DAILY_LIMIT,
+        used:
+          usageReservation.used,
+        remaining:
+          usageReservation.remaining
+      }
     });
 
   } catch (error) {
-    console.error('❌ CHATBOT ERROR:', error);
+    console.error(
+      '❌ CHATBOT ERROR:',
+      error
+    );
+
+    // Don't consume a question if generation failed.
+    if (usageReservation?.key) {
+      rollbackChatUsage(
+        usageReservation.key
+      );
+    }
 
     return res.status(500).json({
-      error: 'Failed to generate chatbot response',
+      error:
+        'Failed to generate chatbot response',
       details:
-        process.env.NODE_ENV === 'development'
+        process.env.NODE_ENV ===
+        'development'
           ? error.message
           : undefined
     });
   }
-});
-
-// Global error handler
-app.use((err, _req, res, _next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error:
-      process.env.NODE_ENV === 'development'
-        ? err.message
-        : 'An unexpected error occurred'
-  });
 });
 
 // Store active editors with full names
